@@ -227,6 +227,7 @@ RCT_EXPORT_METHOD(shouldDropEmptyRanges:(BOOL)drop)
                             @"beacons": beaconArray
                             };
     
+    [self sendNotification];
     [self.bridge.eventDispatcher sendDeviceEventWithName:@"beaconsDidRange" body:event];
 }
 
@@ -237,6 +238,7 @@ RCT_EXPORT_METHOD(shouldDropEmptyRanges:(BOOL)drop)
                             @"uuid": [region.proximityUUID UUIDString],
                             };
     
+    [self sendNotification];
     [self.bridge.eventDispatcher sendDeviceEventWithName:@"regionDidEnter" body:event];
 }
 
@@ -248,6 +250,28 @@ RCT_EXPORT_METHOD(shouldDropEmptyRanges:(BOOL)drop)
                             };
     
     [self.bridge.eventDispatcher sendDeviceEventWithName:@"regionDidExit" body:event];
+}
+
+- (void)sendNotification {
+    //iOS 10 localnotification.
+    if ([UNUserNotificationCenter class]) {
+        UNMutableNotificationContent *content = [UNMutableNotificationContent new];
+        content.body = @"Check nu de iBeacon pagina in de app voor meer informatie!";
+        content.categoryIdentifier = @"beacon";
+        content.sound = [UNNotificationSound defaultSound];
+        
+        UNNotificationTrigger *trigger = [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:1.0 repeats:NO];
+        UNNotificationRequest *request = [UNNotificationRequest requestWithIdentifier:@"beacon" content:content trigger:trigger];
+        [[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request withCompletionHandler:nil];
+    } else {
+        //iOS 9 and below localnotification.
+        [[UIApplication sharedApplication] cancelAllLocalNotifications];
+        
+        UILocalNotification *notification = [UILocalNotification new];
+        notification.alertBody = @"Check nu de iBeacon pagina in de app voor meer informatie!";
+        notification.soundName = UILocalNotificationDefaultSoundName;
+        [[UIApplication sharedApplication] presentLocalNotificationNow:notification];
+    }
 }
 
 @end
