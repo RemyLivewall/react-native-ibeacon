@@ -34,7 +34,6 @@ RCT_EXPORT_MODULE()
 {
     if (self = [super init]) {
         self.locationManager = [[CLLocationManager alloc] init];
-        
 
         self.locationManager.delegate = self;
         self.locationManager.pausesLocationUpdatesAutomatically = NO;
@@ -255,22 +254,38 @@ RCT_EXPORT_METHOD(shouldDropEmptyRanges:(BOOL)drop)
 }
 
 - (void)sendNotification {
-    //iOS 10 localnotification.
+    NSString *notificationBody = @"Check nu de iBeacon pagina in de app voor meer informatie!";
+    NSString *notificationIdentifier = @"beacon notification";
+    //Get the last notification fire dat from the user defaults.
+    NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
+    NSDate *lastFireDate = [userDefaults objectForKey:notificationIdentifier];
+    //Create a calendar and a date 10 minutes in the future (60 * 10).
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    NSDate *tenMinutesSinceFire = [NSDate dateWithTimeInterval:60 * 10 sinceDate:lastFireDate];
+    //If the last fire date was less than 10 minutes ago, don't fire a notification.
+    if(lastFireDate && [tenMinutesSinceFire compare:[NSDate date]] == NSOrderedAscending) {
+        return;
+    }
+    [userDefaults setObject:[NSDate new] forKey:notificationIdentifier];
     if ([UNUserNotificationCenter class]) {
+        //iOS 10 local notification.
         UNMutableNotificationContent *content = [UNMutableNotificationContent new];
-        content.body = @"Check nu de iBeacon pagina in de app voor meer informatie!";
-        content.categoryIdentifier = @"beacon";
+        content.body = notificationBody;
+        content.categoryIdentifier = notificationIdentifier;
         content.sound = [UNNotificationSound defaultSound];
-
+        //Create the notification trigger and request with a small delay.
         UNNotificationTrigger *trigger = [UNTimeIntervalNotificationTrigger triggerWithTimeInterval:1.0 repeats:NO];
-        UNNotificationRequest *request = [UNNotificationRequest requestWithIdentifier:@"beacon" content:content trigger:trigger];
-        [[UNUserNotificationCenter currentNotificationCenter] addNotificationRequest:request withCompletionHandler:nil];
+        UNNotificationRequest *request = [UNNotificationRequest requestWithIdentifier:notificationIdentifier content:content trigger:trigger];
+        //Get the notification center and remove any old notifications before requesting the new one.
+        UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
+        [center removePendingNotificationRequestsWithIdentifiers:@[notificationIdentifier]];
+        [center removeDeliveredNotificationsWithIdentifiers:@[notificationIdentifier]];
+        [center addNotificationRequest:request withCompletionHandler:nil];
     } else {
-        //iOS 9 and below localnotification.
+        //iOS 9 and below local notification.
         [[UIApplication sharedApplication] cancelAllLocalNotifications];
-
         UILocalNotification *notification = [UILocalNotification new];
-        notification.alertBody = @"Check nu de iBeacon pagina in de app voor meer informatie!";
+        notification.alertBody = notificationBody;
         notification.soundName = UILocalNotificationDefaultSoundName;
         [[UIApplication sharedApplication] presentLocalNotificationNow:notification];
     }
