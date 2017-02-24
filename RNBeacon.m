@@ -203,7 +203,8 @@ RCT_EXPORT_METHOD(shouldDropEmptyRanges:(BOOL)drop)
 -(void) locationManager:(CLLocationManager *)manager didRangeBeacons:
 (NSArray *)beacons inRegion:(CLBeaconRegion *)region
 {
-    if (self.dropEmptyRanges && beacons.count == 0) {
+    BOOL isEmptyRange = beacons.count == 0;
+    if (self.dropEmptyRanges && isEmptyRange) {
         return;
     }
     NSMutableArray *beaconArray = [[NSMutableArray alloc] init];
@@ -228,7 +229,9 @@ RCT_EXPORT_METHOD(shouldDropEmptyRanges:(BOOL)drop)
                             @"beacons": beaconArray
                             };
 
-    [self sendNotification];
+    if(!isEmptyRange) {
+        [self sendNotification];
+    }
     [self.bridge.eventDispatcher sendDeviceEventWithName:@"beaconsDidRange" body:event];
 }
 
