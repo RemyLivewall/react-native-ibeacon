@@ -266,7 +266,7 @@ RCT_EXPORT_METHOD(shouldDropEmptyRanges:(BOOL)drop)
     NSCalendar *calendar = [NSCalendar currentCalendar];
     NSDate *tenMinutesSinceFire = [NSDate dateWithTimeInterval:60 * 10 sinceDate:lastFireDate];
     //If the last fire date was less than 10 minutes ago, don't fire a notification.
-    if(lastFireDate && [tenMinutesSinceFire compare:[NSDate date]] == NSOrderedAscending) {
+    if(lastFireDate && [tenMinutesSinceFire compare:[NSDate date]] == NSOrderedDescending) {
         return;
     }
     [userDefaults setObject:[NSDate new] forKey:notificationIdentifier];
